@@ -1,2 +1,78 @@
-“Hello-world!!!”
-“Hello-world!!!!!!”
+"Hello-world!!!"
+"Hello-world!!!!!!"
+
+# note下書き投稿ツール
+
+Seleniumを使用してnoteに下書き記事を自動投稿するPythonスクリプトです。
+
+## 必要要件
+
+- Python 3.7以上
+- Google Chrome
+- ChromeDriver（自動でインストールされます）
+
+## セットアップ
+
+1. 依存関係をインストール:
+```bash
+pip install -r requirements.txt
+```
+
+2. 環境変数を設定（推奨）:
+```bash
+export NOTE_EMAIL="your-email@example.com"
+export NOTE_PASSWORD="your-password"
+```
+
+または、スクリプト内で直接指定することも可能です。
+
+## 使用方法
+
+### 基本的な使い方
+
+```python
+from note_draft_poster import NoteDraftPoster
+
+# インスタンスを作成
+poster = NoteDraftPoster(
+    email="your-email@example.com",
+    password="your-password",
+    headless=False  # ブラウザを表示する場合はFalse
+)
+
+# ドライバーをセットアップ
+poster.setup_driver()
+
+# ログイン
+poster.login()
+
+# 下書き記事を作成
+poster.create_draft(
+    title="記事のタイトル",
+    content="記事の本文",
+    tags=["タグ1", "タグ2"]  # オプション
+)
+
+# ブラウザを閉じる
+poster.close()
+```
+
+### コマンドラインから実行
+
+デフォルトのサンプル記事を投稿:
+```bash
+python note_draft_poster.py
+```
+
+## 注意事項
+
+- noteの利用規約を遵守してください
+- 大量の自動投稿はアカウント停止のリスクがあります
+- パスワードは環境変数で管理することを推奨します
+- noteのUIが変更された場合、スクリプトの修正が必要になる可能性があります
+
+## セキュリティ
+
+- パスワードをソースコードに直接記述しないでください
+- 環境変数やシークレット管理ツールを使用してください
+- このスクリプトを公開リポジトリにプッシュする際は、認証情報が含まれていないことを確認してください
