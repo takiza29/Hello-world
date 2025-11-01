@@ -124,15 +124,37 @@ class NoteDraftPoster:
                 EC.presence_of_element_located((By.CSS_SELECTOR, "div[contenteditable='true']"))
             )
 
-            # JavaScriptを使ってプレーンテキストとして本文を設定
-            # innerTextを使用することで、HTMLタグを含まないプレーンテキストとして挿入
+            # JavaScriptを使ってClipboardEvent（paste）を発火
+            # 手動の「プレーンテキストとして貼り付け」を模倣してmarkdown変換をトリガー
             self.driver.execute_script(
                 """
-                arguments[0].focus();
-                arguments[0].innerText = arguments[1];
-                // inputイベントを発火させて、noteのエディタに変更を認識させる
-                arguments[0].dispatchEvent(new Event('input', { bubbles: true }));
-                arguments[0].dispatchEvent(new Event('change', { bubbles: true }));
+                const element = arguments[0];
+                const text = arguments[1];
+
+                element.focus();
+
+                // DataTransferオブジェクトを作成（クリップボードデータを模倣）
+                const dataTransfer = new DataTransfer();
+                dataTransfer.setData('text/plain', text);
+
+                // ClipboardEvent（paste）を作成して発火
+                const pasteEvent = new ClipboardEvent('paste', {
+                    clipboardData: dataTransfer,
+                    bubbles: true,
+                    cancelable: true
+                });
+
+                element.dispatchEvent(pasteEvent);
+
+                // テキストを設定（イベントがキャンセルされた場合のフォールバック）
+                element.innerText = text;
+
+                // InputEventを発火（insertFromPasteタイプ）
+                element.dispatchEvent(new InputEvent('input', {
+                    inputType: 'insertFromPaste',
+                    data: text,
+                    bubbles: true
+                }));
                 """,
                 content_area,
                 content
