@@ -124,15 +124,69 @@ class NoteDraftPoster:
                 EC.presence_of_element_located((By.CSS_SELECTOR, "div[contenteditable='true']"))
             )
 
-            # JavaScriptを使ってプレーンテキストとして本文を設定
-            # innerTextを使用することで、HTMLタグを含まないプレーンテキストとして挿入
+            # JavaScriptを使って、キーボードイベントを発火させながらテキストを挿入
+            # markdown記法を認識させるため、行ごとに処理してEnterキーイベントを発火
             self.driver.execute_script(
                 """
-                arguments[0].focus();
-                arguments[0].innerText = arguments[1];
-                // inputイベントを発火させて、noteのエディタに変更を認識させる
-                arguments[0].dispatchEvent(new Event('input', { bubbles: true }));
-                arguments[0].dispatchEvent(new Event('change', { bubbles: true }));
+                const element = arguments[0];
+                const text = arguments[1];
+
+                element.focus();
+
+                // 既存の内容をクリア
+                element.innerText = '';
+
+                // テキストを行ごとに分割
+                const lines = text.split('\\n');
+
+                // 各行を処理
+                for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i];
+
+                    // 行のテキストを1文字ずつ挿入（markdown記法のトリガーのため）
+                    for (let j = 0; j < line.length; j++) {
+                        const char = line[j];
+
+                        // テキストを挿入
+                        document.execCommand('insertText', false, char);
+
+                        // スペースの場合、キーイベントを発火（markdown変換のトリガー）
+                        if (char === ' ') {
+                            element.dispatchEvent(new KeyboardEvent('keydown', {
+                                key: ' ',
+                                code: 'Space',
+                                keyCode: 32,
+                                bubbles: true
+                            }));
+                            element.dispatchEvent(new KeyboardEvent('keyup', {
+                                key: ' ',
+                                code: 'Space',
+                                keyCode: 32,
+                                bubbles: true
+                            }));
+                        }
+                    }
+
+                    // 最後の行以外では改行を挿入
+                    if (i < lines.length - 1) {
+                        document.execCommand('insertText', false, '\\n');
+                        element.dispatchEvent(new KeyboardEvent('keydown', {
+                            key: 'Enter',
+                            code: 'Enter',
+                            keyCode: 13,
+                            bubbles: true
+                        }));
+                        element.dispatchEvent(new KeyboardEvent('keyup', {
+                            key: 'Enter',
+                            code: 'Enter',
+                            keyCode: 13,
+                            bubbles: true
+                        }));
+                    }
+                }
+
+                // 最終的なinputイベントを発火
+                element.dispatchEvent(new Event('input', { bubbles: true }));
                 """,
                 content_area,
                 content
