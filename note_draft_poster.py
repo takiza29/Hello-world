@@ -119,14 +119,24 @@ class NoteDraftPoster:
             title_input.send_keys(title)
             time.sleep(1)
 
-            # 本文を入力
-            # noteのエディタは複雑な構造なので、JavaScriptで直接入力する方法も検討
+            # 本文を入力（JavaScriptでプレーンテキストとして設定）
             content_area = WebDriverWait(self.driver, 10).until(
                 EC.presence_of_element_located((By.CSS_SELECTOR, "div[contenteditable='true']"))
             )
-            content_area.click()
-            time.sleep(1)
-            content_area.send_keys(content)
+
+            # JavaScriptを使ってプレーンテキストとして本文を設定
+            # innerTextを使用することで、HTMLタグを含まないプレーンテキストとして挿入
+            self.driver.execute_script(
+                """
+                arguments[0].focus();
+                arguments[0].innerText = arguments[1];
+                // inputイベントを発火させて、noteのエディタに変更を認識させる
+                arguments[0].dispatchEvent(new Event('input', { bubbles: true }));
+                arguments[0].dispatchEvent(new Event('change', { bubbles: true }));
+                """,
+                content_area,
+                content
+            )
             time.sleep(2)
 
             # タグを追加（オプション）
