@@ -147,10 +147,7 @@ class NoteDraftPoster:
                     for (let j = 0; j < line.length; j++) {
                         const char = line[j];
 
-                        // テキストを挿入
-                        document.execCommand('insertText', false, char);
-
-                        // スペースの場合、キーイベントを発火（markdown変換のトリガー）
+                        // スペースの場合、先にキーイベントを発火（markdown変換のトリガー）
                         if (char === ' ') {
                             element.dispatchEvent(new KeyboardEvent('keydown', {
                                 key: ' ',
@@ -158,6 +155,16 @@ class NoteDraftPoster:
                                 keyCode: 32,
                                 bubbles: true
                             }));
+                        }
+
+                        // テキストを挿入
+                        document.execCommand('insertText', false, char);
+
+                        // inputイベントを発火
+                        element.dispatchEvent(new Event('input', { bubbles: true }));
+
+                        // スペースの場合、keyupイベントを発火
+                        if (char === ' ') {
                             element.dispatchEvent(new KeyboardEvent('keyup', {
                                 key: ' ',
                                 code: 'Space',
@@ -169,13 +176,14 @@ class NoteDraftPoster:
 
                     // 最後の行以外では改行を挿入
                     if (i < lines.length - 1) {
-                        document.execCommand('insertText', false, '\\n');
                         element.dispatchEvent(new KeyboardEvent('keydown', {
                             key: 'Enter',
                             code: 'Enter',
                             keyCode: 13,
                             bubbles: true
                         }));
+                        document.execCommand('insertText', false, '\\n');
+                        element.dispatchEvent(new Event('input', { bubbles: true }));
                         element.dispatchEvent(new KeyboardEvent('keyup', {
                             key: 'Enter',
                             code: 'Enter',
